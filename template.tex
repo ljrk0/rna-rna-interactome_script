@@ -1,11 +1,15 @@
 % chktex-file 36 chktex-file 18 chktex-file 15 chktex-file 17
 \documentclass{scrartcl}
+\overfullrule=5pt
 
+\usepackage{blkarray}
 \usepackage{amsmath}
 \usepackage{mathtools} % stuff like pmatrix* that should be in amsmath but isn't
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{amsthm}
+% alternate style calligraphic maths, more close to the one used in the lecture
+%\usepackage{calrsfs}
 
 \DeclareMathOperator{\Ima}{Im}
 \DeclareMathOperator{\rk}{rk}
@@ -19,7 +23,7 @@
 \newcommand{\Path}{\Pi}
 \newcommand{\pointer}{\text{pointer}}
 
-\newcommand{\Observ}{\mathcal{A}}
+\newcommand{\Alphabet}{\mathcal{A}}
 \newcommand{\States}{\mathcal{S}}
 \newcommand{\Trans}{\mathcal{T}}
 \newcommand{\EmProb}{\mathcal{E}}

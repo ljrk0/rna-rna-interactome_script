@@ -10,15 +10,13 @@
 \paragraph{1. Example: Dishonest Casino}
 Situation: Casino plays dice.  Usually, a fair dice (\(F\)) is used, but
 occasionally it is replaced by a loaded dice (\(L\)).  We have the observables
-and a sequence:
+(alphabet) and a sequence:
 \[
-    \Observ := \{ 1, 2, 3, 4, 5, 6 \} \qquad
+    \Alphabet := \{ 1, 2, 3, 4, 5, 6 \} \qquad
     X = (1,3,6,6,5,...)
 \]
-Our Task is, given a sequence \(X\) of observables, to find when the loaded and
-the fair dice was used.
-
-Our strategy consists of two steps:
+Our task is, given a sequence \(X\) of observables, to find when the loaded and
+the fair dice was used. The strategy we employ consists of two steps:
 \begin{enumerate}[label=Step \arabic*.]
 \item Capture the known features of how casino operates.  We capture this in
  a probabilistic model.
@@ -29,12 +27,12 @@ Our strategy consists of two steps:
 
 Let's mark down the key features of our casino:
 \begin{enumerate}[label=(\alph*)]
-\item The dice \(F\) generates \(a\in\Observ\) with equal probability:
+\item The dice \(F\) generates \(a\in\Alphabet\) with equal probability:
  \[
    e_F(1) = e_F(2) = \dotsb = 1/6
  \]
- Here \(e_F(a)\) with \(a\in\Observ\) denotes the emission probability
- of state \(F\) to emit observable \(a\in\Observ\).
+ Here \(e_F(a)\) with \(a\in\Alphabet\) denotes the emission probability
+ of state \(F\) to emit observable \(a\in\Alphabet\).
 \item The loaded dice \(L\) has a bias:
  \[
    e_L(1) = e_L(2) = e_L(3) = e_L(4) = 1/10 \qquad e_L(5) = e_L(6) = 3/10
@@ -131,8 +129,8 @@ The mode of the dis-honest asino can be defined as follows:
 \item set of transition probabilities
   \(\Trans = \{ t(a,b) \mid a,b\in\States \}\)
 \item set of emission probabilities
-  \(\EmProb = \{ e_s(a) \mid s\in\States, a\in\Observ, s\text{ non-silent} \}\)
-\item a set of observables \(\Observ = {1,2,\dotsc,6}\)
+  \(\EmProb = \{ e_s(a) \mid s\in\States, a\in\Alphabet, s\text{ non-silent} \}\)
+\item set of observables \(\Alphabet = {1,2,\dotsc,6}\)
 \end{itemize}
 
 Note that the transition and emission probabilities need to fulfill the
@@ -165,8 +163,8 @@ hidden by the sequence.
 \subsection{The Viterbi algorithm}
 
 Setting: Given a so-called Hidden Markvo Model as defined by the four sets
-\(\States,\Observ,\Trans,\EmProb\) as introduced earlier and a sequence \(X\)
-of observables from \(\Observ\) of length \(L := |X|\), we want to identify the
+\(\States,\Alphabet,\Trans,\EmProb\) as introduced earlier and a sequence \(X\)
+of observables from \(\Alphabet\) of length \(L := |X|\), we want to identify the
 state path \(\Path(X)\) in the model, which maximizes \(P(X,\Path)\), ie.\@
 the optimal state path or Viterbi path for a given \(X\) and model:
 \[
@@ -180,36 +178,36 @@ with \(1\leq j\leq L\), and we know the state in which this state path ends on
 the state \(i\):
 \[
     \Path^*(j,i) = (\Path_0^*, \Path_1^*, \dotsc, \Path_j^* = i)
-                 = \argmax_{\Path} \{ P(X_j,\Path) \mid \Path_j = i) \}
+                 = \argmax_{\Path} \{ P(x_j,\Path) \mid \Path_j = i \}
 \]
 Then we can easily derive the \enquote{complete} optimal path \(\Path^*(j+1,k)\)
-with the state \(k\in\States\) for sequence \((X_1,\dotsc,X_j,X_{j+1})\).
-Because the best overall probability for a sequence \((X_1,\dotsc,X_{j+1})\)
+with the state \(k\in\States\) for sequence \((x1,\dotsc,x_j,x_{j+1})\).
+Because the best overall probability for a sequence \((x_1,\dotsc,x_{j+1})\)
 ending in state \(k\in\States\) is equal to the maximum probability of any
 optimal path to any \(m\) optimal sequences and then further to \(k\), times the
 emission probability for \(k\).
 \[
-    P(X_{j+1}, \Path^*(j+1,k))
-  = \max_{m\in\States} \{ P(X_j,\Path^*(j,m)) \cdot t(m,k) \} \cdot e_k(X_{j+1})
+    P(x_{j+1}, \Path^*(j+1,k))
+  = \max_{m\in\States} \{ P(x_j,\Path^*(j,m)) \cdot t(m,k) \} \cdot e_k(x_{j+1})
 \]
 So, the probability of the best state path finishing in state \(k\) at sequence
 position \(j+1\) can be derived from the best state path\emph{s} finishing at
 the previous sequence position \(j\) in any state \(m\in\States\), from the
 transition probability of going from state \(m\) to state \(k\) and from the
-emission probability probability of reading \(X_{j+1}\) in state \(k\).
+emission probability probability of reading \(x_{j+1}\) in state \(k\).
 
 This is the key idea behind the Viterbi algorithm.
 
 \begin{definition}[Viterbi Algorithm]
-Let \(X=(X_1,\dotsc,X_L)\) a sequence of length \(L\) and given a model \(H\)
+Let \(X=(x_1,\dotsc,x_L)\) a sequence of length \(L\) and given a model \(H\)
 with \(\States=\{0,1,\dotsc,N\}\) where \(0\) is the Start state and \(N\) is
 the End state, and where these two states are the only silent states in the
-model.  Also with alphabet \(\Observ\)
+model.  Also with alphabet \(\Alphabet\)
 \[
-    \Trans = \{ t(a,b) \mid a,b \in States \} \qquad
-    \EmProb = \{ e_a(x) \mid a \in \States, x\in\Observ \}
+    \Trans = \{ t(a,b) \mid a,b \in \States \} \qquad
+    \EmProb = \{ e_a(x) \mid a \in \States, x\in\Alphabet \}
 \]
-We note down \(v_k(i) = P(X_i,\Path^*(i,k))\) as the Vierbi element for
+We note down \(v_k(i) = P(x_i,\Path^*(i,k))\) as the Viterbi element for
 sequence position \(i\) and state \(k\) in the model.
 
 \begin{enumerate}[label=(\alph*)]
@@ -221,7 +219,9 @@ sequence position \(i\) and state \(k\) in the model.
           0, & k \neq 0, k\in\States
       \end{cases}
   \]
-\item Recursion.
+\item Recursion.  Purpose: Build up the next optimal paths step-by-step, walking
+through the found optimal paths of the previous step.
+See algorithm~\ref{alg:viterbi}.
 
 \SetStartEndCondition{ (}{)}{)}
 \SetAlgoBlockMarkers{}{\}}
@@ -229,13 +229,15 @@ sequence position \(i\) and state \(k\) in the model.
 \SetKwIF{If}{ElseIf}{Else}{if}{ \{}{elif}{else \{}{}
 \SetKwFor{While}{while}{ \{}{}
 \AlgoDisplayBlockMarkers\SetAlgoNoLine%
-\begin{algorithm}
+\begin{algorithm}[ht]
 \For{$i = 1$; $i \leq L$; $i++$} {
     \For{$k = 1$; $k < N$; $k++$} {
-        $t_k(i) = \max\limits_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \} \cdot e_k(X_i)$\;
+        $t_k(i) = \max\limits_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \} \cdot e_k(x_i)$\;
         $\pointer_k(i) = \argmax\limits_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \}$\;
     }
 }
+\label{alg:viterbi}
+\caption{Viterbi-Algorithm: Recursion step}
 \end{algorithm}
 \item Termination. Purpose: Ensure all state paths considered end in the End
   state at the end of the input sequence \(X\):
@@ -250,7 +252,21 @@ sequence position \(i\) and state \(k\) in the model.
 What we are \emph{actually} are interested in is the best annotation for input
 sequence \(X\), ie.\@ the Viterbi path \(\Path^*\).
 
+\[
+\begin{blockarray}{ccccccc}
+\begin{block}{c[cccccc]}
+N      & 0      & \hdots & x   &   &        &  \\
+       & \vdots &        & x   &   &        &  \\
+\vdots &        &        & X   & k &        &  \\
+       & \vdots &        & x   &   &        &  \\
+       & 0      &        & x   &   &        &  \\
+0      & 1      &        & x   &   &        &  \\
+\end{block}
+       & 0      & \hdots & i-1 & i & \hdots & L
+\end{blockarray}
+\]
 %TODO: Pointer Matrix and Viterbi Matrix
+%This is just a placeholder for tomorrow.
 
 
 
