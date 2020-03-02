@@ -1,0 +1,168 @@
+% chktex-file 36 chktex-file 18 chktex-file 15 chktex-file 17
+\documentclass{scrartcl}
+
+\usepackage{amsmath}
+\usepackage{mathtools} % stuff like pmatrix* that should be in amsmath but isn't
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\DeclareMathOperator{\Ima}{Im}
+\DeclareMathOperator{\rk}{rk}
+\DeclareMathOperator{\rem}{rem}
+\DeclareMathOperator{\xor}{\oplus}
+\DeclareMathOperator*{\argmax}{argmax}
+
+
+\newcommand{\Diff}{\Delta}
+\newcommand{\diff}{\delta}
+\newcommand{\Path}{\Pi}
+\newcommand{\pointer}{\text{pointer}}
+
+\newcommand{\Observ}{\mathcal{A}}
+\newcommand{\States}{\mathcal{S}}
+\newcommand{\Trans}{\mathcal{T}}
+\newcommand{\EmProb}{\mathcal{E}}
+
+\newcommand{\GF}{\mathbb{F}}
+
+\usepackage{iftex}
+
+\ifPDFTeX
+	\usepackage[utf8]{inputenc}
+	\usepackage[T1]{fontenc}
+	\usepackage{lmodern}
+	\usepackage[english]{babel}
+\else
+	\usepackage{fontspec}
+%	\defaultfontfeatures{Mapping=TeX} % UTF-8, en/em-dashes with -- etc.
+	\setmainfont{Latin Modern Roman}
+	\setsansfont{Latin Modern Sans}
+	\setmonofont{Latin Modern Mono}
+	\usepackage{polyglossia}
+	\setdefaultlanguage{english}
+\fi
+
+\usepackage{microtype}
+
+\usepackage{csquotes}       % \enquote for properly enclosed quotes
+
+\usepackage{float}
+
+\usepackage[inline]{enumitem}
+
+% wooo, some colors
+\usepackage{xcolor}
+\usepackage{colortbl}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{mygreenblue}{rgb}{0.1,0.6,0.4}
+
+\usepackage{algorithm2e}
+
+% sane defaults
+\usepackage{listings}
+\lstdefinelanguage{none}{}
+\lstdefinestyle{default}{%
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\scriptsize,
+  numbersep=2pt,
+  basicstyle=\ttfamily,
+  backgroundcolor=\color{gray!8},
+  commentstyle=\color{mygreenblue},
+  keywordstyle=\color{blue},
+  stringstyle=\color{mymauve},
+  tabsize=4,
+  keepspaces=true,
+  showstringspaces=false,
+}
+\lstdefinelanguage[99]{C}[ANSI]{C}
+{
+  morekeywords={\_Bool, \_Alignas},
+}
+\lstset{style=default, language={[99]C}}
+\renewcommand{\lstlistingname}{Codeexample}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc,automata,shapes}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.pathreplacing}
+
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[pdfencoding=auto]{hyperref}
+
+% bits and bytes
+\usepackage[binary-units=true]{siunitx}
+
+% Bibliography with biber backend
+\makeatletter
+\def\blx@nowarnpolyglossia{}
+\makeatother
+\usepackage[
+  natbib=true,
+  backend=biber,
+  style=numeric,
+  citestyle=numeric,
+  sorting=nty,
+  sortlocale=en_US
+]{biblatex}
+\addbibresource{./bibliography.bib}
+
+% \theauthor, etc.
+\usepackage{titling}
+
+% More space
+\usepackage[left=3.0cm,right=2.5cm,top=4cm,bottom=3cm]{geometry}
+
+% Headers and Footers
+\usepackage[headsepline]{scrlayer-scrpage}
+\pagestyle{scrheadings}
+\lohead*{\theauthor}
+\cohead*{\thetitle}
+\rohead*{\today}
+\cofoot*{\thepage}
+
+% Data
+\author{L.~König}
+\title{RNA-RNA interact}
+
+\theoremstyle{plain}
+% The following \newtheorem{x}{y} definitions will define an environment x with
+% title y of style plain
+\newtheorem{theorem}{Satz}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Anmerkung}
+
+%\theoremstyle{...}
+% All \newtheorem definitions will use the last set theoremstyle
+
+\newtheoremstyle{exercise}% name of the style to be used
+  {}         % measure of space to leave above the theorem. E.g.: 3pt
+  {}         % measure of space to leave below the theorem. E.g.: 3pt
+  {} % name of font to use in the body of the theorem
+  {}         % measure of space to indent
+  {\bfseries}% name of head font
+  {}         % punctuation between head and body
+  { }        % space after theorem head; " " = normal interword space
+  {%
+\thmname{#1}\thmnumber{ #2}.\thmnote{ (#3)}%  Manually specify head
+}
+\theoremstyle{exercise}
+\newtheorem{exercise}{Aufgabe}[section]
+
+
+%\begin{document}
+%
+%\begin{lstlisting}
+%foo
+%\end{lstlisting}
+%\end{document}
