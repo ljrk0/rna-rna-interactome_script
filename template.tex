@@ -23,6 +23,11 @@
 \newcommand{\Path}{\Pi}
 \newcommand{\pointer}{\text{pointer}}
 
+\newcommand{\Syms}{\mathcal{Q}}
+\newcommand{\NTSyms}{\mathcal{S}}
+\newcommand{\Rules}{\mathcal{P}}
+\newcommand{\Empty}{\varepsilon}
+
 \newcommand{\Alphabet}{\mathcal{A}}
 \newcommand{\States}{\mathcal{S}}
 \newcommand{\Trans}{\mathcal{T}}
@@ -64,6 +69,11 @@
 \definecolor{mygreenblue}{rgb}{0.1,0.6,0.4}
 
 \usepackage{algorithm2e}
+\SetStartEndCondition{ (}{)}{)}
+\SetAlgoBlockMarkers{}{\}}
+\SetKwFor{For}{for}{ \{}{}
+\SetKwIF{If}{ElseIf}{Else}{if}{ \{}{elif}{else \{}{}
+\SetKwFor{While}{while}{ \{}{}
 
 % sane defaults
 \usepackage{listings}
@@ -95,6 +105,7 @@
 \usetikzlibrary{positioning,calc,automata,shapes}
 \usetikzlibrary{calc}
 \usetikzlibrary{decorations.pathreplacing}
+\usepackage{tikz-qtree}
 
 \PassOptionsToPackage{hyphens}{url}
 \usepackage[pdfencoding=auto]{hyperref}

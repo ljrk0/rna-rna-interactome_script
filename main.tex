@@ -17,7 +17,7 @@ occasionally it is replaced by a loaded dice (\(L\)).  We have the observables
 \]
 Our task is, given a sequence \(X\) of observables, to find when the loaded and
 the fair dice was used. The strategy we employ consists of two steps:
-\begin{enumerate}[label=Step \arabic*.]
+\begin{enumerate}[label=\arabic*.]
 \item Capture the known features of how casino operates.  We capture this in
  a probabilistic model.
 \item Use the model from the first step to analyze input sequences X and tell
@@ -97,7 +97,7 @@ observables.
 t(\text{Start},F) = t(\text{Start},L) = \frac{1}{2}
 t(F,L) = \frac{1}{100}
 t(L,F)=\frac{1}{20}
-t(F,End) = t(L,\text{End}) = \frac{1}{100}
+t(F,\text{End}) = t(L,\text{End}) = \frac{1}{100}
 \]
 The ramining probabilities in the model can be inferred, as for any state \(s\)
 in the model, we know that when being based in any state \(s\) in our model, the
@@ -223,16 +223,13 @@ sequence position \(i\) and state \(k\) in the model.
 through the found optimal paths of the previous step.
 See algorithm~\ref{alg:viterbi}.
 
-\SetStartEndCondition{ (}{)}{)}
-\SetAlgoBlockMarkers{}{\}}
-\SetKwFor{For}{for}{ \{}{}
-\SetKwIF{If}{ElseIf}{Else}{if}{ \{}{elif}{else \{}{}
-\SetKwFor{While}{while}{ \{}{}
+
+
 \AlgoDisplayBlockMarkers\SetAlgoNoLine%
 \begin{algorithm}[ht]
 \For{$i = 1$; $i \leq L$; $i++$} {
     \For{$k = 1$; $k < N$; $k++$} {
-        $t_k(i) = \max\limits_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \} \cdot e_k(x_i)$\;
+        $v_k(i) = \max\limits_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \} \cdot e_k(x_i)$\;
         $\pointer_k(i) = \argmax\limits_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \}$\;
     }
 }
@@ -255,12 +252,24 @@ sequence \(X\), ie.\@ the Viterbi path \(\Path^*\).
 \[
 \begin{blockarray}{ccccccc}
 \begin{block}{c[cccccc]}
-N      & 0      & \hdots & x   &   &        &  \\
-       & \vdots &        & x   &   &        &  \\
-\vdots &        &        & X   & k &        &  \\
-       & \vdots &        & x   &   &        &  \\
-       & 0      &        & x   &   &        &  \\
-0      & 1      &        & x   &   &        &  \\
+N      &        & \hdots & x &               &        &  \pointer_N(L) \\
+       & \vdots &        & x &               &        &             \\
+k      &        &        & X & \pointer_k(i) &        &  \\
+       & \vdots &        & x &               &        &  \\
+       &        &        & x &               &        &  \\
+0      & -1     &        & x &               &        &  \\
+\end{block}
+       & 0      & \hdots & i-1 & i & \hdots & L
+\end{blockarray}
+\qquad
+\begin{blockarray}{ccccccc}
+\begin{block}{c[cccccc]}
+N      & 0      &        &  &        &        &  v_N(L) \\
+       &        &        &  &        &        &         \\
+k      & \vdots &        &  & v_k(i) &        &  \\
+       &        &        &  &        &        &  \\
+       & 0      &        &  &        &        &  \\
+0      & 1      &        &  &        &        &  \\
 \end{block}
        & 0      & \hdots & i-1 & i & \hdots & L
 \end{blockarray}
@@ -288,5 +297,430 @@ We continue with the recursion while \(\pointer\neq -1\) and get optimal state:
     \Path^* = (\Path^*_0, \Path^*_1,\dotsc,\Path^*_{L+1})
 \]
 \end{definition}
+
+\subsection*{Exercises}
+\begin{enumerate}[label=(\alph*)]
+\item The memory requirement for calculating the entire Viterbi matrix is
+  given by the number of items in the matrix.  As it is a \(L\times N\)-matrix,
+  this is asymptotically in \(\mathcal{O}(N\cdot L)\).
+
+  The time used includes an outer loop of \(L\) steps, with an inner loop of
+  \(N-1\) steps with a calculation of \(\max\) over \(N\) states, yielding an
+  asymptotic time of \(\mathcal{O}(L\cdot N^2)\).
+\item Given the Viterbi matrix, the traceback takes \(\mathcal{O}(L)\) in terms
+  of space and memory.
+\item We can improve time by knowing that we only need to iterate over
+  \(N_\text{out}\) many nodes in the inner loop, while the maximum now does not
+  consider the whole set \(S\) but a subset of cardinality \(N_\text{in}\).
+  Thus we have a better time of \(\mathcal{O}(N_\text{out}N_\text{in}\cdot L)\).
+
+  Space is not improved, however, as we don't know \emph{which} subset of states
+  are our input/output states.
+\item From a space requirement perspective, we only need to hold the previous
+  column of the Viterbi matrix, thus reducing our memory complexity to
+  \(\mathcal{N}\).  In regards of time, we can't remove any calculation.
+\item Since it doesn't necessarily hold that \(t(a,b) = t(b,a)\) the reverse
+  path may have a different probability.
+\item We are given only the Viterbi matrix, ie.\@ the emission probabilities,
+  the \enquote{current} Viterbi element (going back from the end) and all
+  previous Viterbi elements.  We can then transform the equation from our
+  algorithm and find the previous element that then fulfills the equation:
+  \[
+    v_k(i) = \max_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \} \cdot e_k(x_i)
+    \Leftrightarrow
+    \frac{v_k(i)}{e_k(x_i)} = \max_{m\in\States} \{ v_m(i-1) \cdot t(m,k) \}
+  \]
+\item We only save one of the maximum elements -- which one is up to the
+  implementation -- so we end up with the probability of that path (which is
+  the same as any other optimal, by definition).
+\end{enumerate}
+
+\section{RNA Structure Prediction}
+
+So far, we've seen that a Hidden Markov Model (HMM) can do, given an input
+sequence \(X\), predict the best annotation using the CYK-Algorithm to yield
+\(P(X,\Path^*)\) and the path/annotation \(\Path^*\) itself.
+
+We will now see how one can use an HMM to
+\begin{enumerate}[label=(\alph*)]
+\item test competing hypotheses, eg.\@ does \(X\) derive only from the loaded
+  dice or the fair dice?
+\item tell us what the most likely state label or annotation for a sequence
+  position \(x_i\) is.
+\end{enumerate}
+
+However, we HMMs limit us, as they analyze a sequence \(X\) in a uni-directional
+way, ie.\@ cannot be used to model long-range correlations, eg.\@ the base-pairs
+of RNA secondary structure.  That is, correlations between base-pairs that
+aren't directly adjacent to each other cannot be modeled, as we have no
+\enquote{memory} of the pre-previous sequence element.
+
+\subsection{Context-free grammars}
+
+Idea: Model RNA structures as sentences of a so-called language where symbols
+may appear in pairs.
+
+
+We can use a grammar to generate sequences belonging to a language.  Eg.\@
+\enquote{This dog eats fish} is a sentence belonging to the English grammar. So
+is \enquote{Green ideas sleep wonderfully}.
+\begin{definition}[Transformation Grammar]
+A transformation grammar consists of
+\begin{itemize}
+\item a set of symbols \(\Syms\) which can
+  be sub-divided into two \emph{disjoint} sub-sets of \emph{terminal symbols}
+  (or Alphabet) \(\Alphabet\) -- it corresponds to the symbols in the input
+  sequences -- and a set of non-terminal symbols \(\NTSyms\), so:
+  \[
+    \Syms=\Alphabet\sqcup\NTSyms
+  \]
+\item a set of production rules \(\Rules\) where every element, ie.\@ every
+  production rule, has the form
+  \[
+    \alpha \to \beta
+  \]
+  where \(\alpha\) and \(\beta\) are each a string of symbols from \(Q\) and
+  \(\alpha\) contains at least one non-terminal symbols form \(\NTSyms\). 
+\end{itemize}
+\end{definition}
+
+By convention we use lower-case letters for elements in \(\Alphabet\) and
+upper-case letters for non-terminals in \(\NTSyms\), and every sequence of
+production rules has to start with a non-terminal \(S\in\NTSyms\).
+Also we define the following symbols with a fixed meaning:
+\begin{itemize}
+\item A non-terminal symbol (word) \(W\in\NTSyms\)
+\item A terminal symbol \(a\in\Alphabet\)
+\item Strings \(\alpha,\gamma\) of symbols from \(\Syms\) \emph{including} the
+  empty string
+\item Similarly the string \(\beta\) \emph{excluding} the empty string.
+\item The empty string \(\Empty\) itself.
+\end{itemize}
+
+\begin{definition}[Context-free Grammar]
+A context-free grammar is a transformational grammar where all production rules
+in \(\Rules\) have the form
+\[
+  W \to \alpha
+\]
+\end{definition}
+
+A few examples of \emph{transformational} grammars:
+\begin{enumerate}[label=(\arabic*)]
+\item \(\Syms=\Alphabet\sqcup\NTSyms\), where the alphabet \(\Alphabet=\{a,b\}\)
+  and \(\NTSyms=\{T,S,\Empty\}\) with the rules
+  \[
+    \Rules=\{ S\to aT, S\to bS, T\to aS, T\to bt, T\to \Empty \}
+  \]
+  The rules can also be summarized as such:
+  \[
+    S\to aT \mid bS \qquad T\to aS \mid bT \mid \Empty
+  \]
+
+  This grammar can be used to generate sentences of \(a\)'s and \(b\)'s with an
+  odd number of \(a\)'s.  Remember: Every sequence of production rules starts
+  with \(S\).  For example the sentence \(ababa\) (only symbols from
+  \(\Alphabet\) allowed here!).
+
+  We can generate this sentence as follows, using the rules 1, 4, 3, 2, 1 and
+  finally 5, by starting with \(S\):
+  \[
+    S\to aT \to abT \to abaS \to ababS \to ababaT \to ababa
+  \]
+\item \(\Syms=\Alphabet\sqcup\NTSyms\) where \(\Alphabet=\{a,b\}\) and
+  \(\NTSyms=\{S\}\) with the rules
+  \[
+    \Rules=\{ S\to aSa, S\to bSb, S\to aa, S\to bb \}
+  \]
+  which again can be written as:
+  \[
+    S\to aSa \mid bSb \mid aa \mid bb
+  \]
+  Note: This is a context-free grammar.
+
+  The sentence \(aabaabaa\) can be generated as follows with the rules
+  1, 1, 2, 3:
+  \[
+    S\to aSa \to aaSaa \to aabSbaa \to aabaabaa
+  \]
+  Here we can make terminals appear in pairs which is just what we need to
+  capture base-pairs in RNA structures.  Hidden Markov Models only allow for
+  \emph{regular grammars}.
+\end{enumerate}
+
+In nature, we know that some RNA structures are pseudo-knotted, ie.\@ they
+contain at least two base-pair \(\{i,j\}\) and \(\{i',j'\}\) where
+\begin{alignat*}{3}
+  x &i < &i' < &j < &j' \\
+  x &(   &[    &)   &]
+\end{alignat*}
+Note, pseudo-knotted RNA structures cannot be (easily) captured using
+context-free grammars (in general, this would only be possible to capture using
+recursively enumerable languages, ie.\@ the decision problem being NP-hard,
+however the pseudo-knots occuring in nature are easier to tackle).  We will
+ignore them from now.
+
+Our strategy using CFGs (context-free grammars) to predict RNA secondary
+structures:
+\begin{enumerate}[label=\arabic*.]
+\item define a CFG whose production rules can handle base-pairs as well as
+  structural features of known RNA structures.
+\item assign probabilities (emission \& transition probabilities as it will
+  turn out) to the production rules of the grammar.  This will allow us to
+  assign an overall probability to a given input sequence \(X\) and a series of
+  production rules that predict the structural annotation for \(X\).
+\item Come up with an efficient algorithm to retrieve the sequence of
+  production rules yielding the overall highest probability for a given input
+  sequence \(X\) (this will be similar to the Viterbi algorithm for HMMs).
+\end{enumerate}
+
+Let's look at another example, the Pfold grammar (Knudsen \& hein,
+Bioinformatics 1999, 15(6)):
+We have a context-free grammar with the symbols \(\Syms=\Alphabet\sqcup\NTSyms\)
+and \(\Alphabet=\{s,d\}\) and \(\NTSyms=\{S,L,F\}\) and the rules:
+\begin{align}
+  S &\to LS \\
+  S &\to L \\
+  F &\to dFd \\
+  F &\to LS \\
+  L &\to s \\
+  L &\to dFd
+\end{align}
+Given the humble RNA structure as sence \(ssddssdds\), we can generate it as
+shown in Figure~\ref{fig:ast}.
+
+\begin{figure}[ht]
+\centering
+\Tree [.S [.L s ] [.S [.L s ] [.S [.L d [.F d [.F [.L s ] [.S [.L s ]  ] ] d ]  d ] [.S [.L s ] ] ] ] ]
+\label{fig:ast}
+\caption{Derivation Tree example}
+\end{figure}
+
+Our strategy for turning the CFG of Pfold into a probabilistic model is to
+create a Stochastic CFG.  The idea is to assign transition probabilities to
+the different choices given the same non-terminal on the left side of the rule,
+ie.\@ these three pairs of alternatives:
+\begin{align}
+  S &\to LS \mid L
+  F &\to dFd \mid LS
+  L &\to s \mid dFd
+\end{align}
+When dealing with RNA sequences, we would set \(\Alphabet=\{a,c,g,u\}\)
+(the RNA nucleotides).  Emission probabilities will be assigned to any
+gproduction rule with terminals on the right hand side.  Eg.\@ for \(L\to dFd\),
+we would assign the emission probability \(e_d\) for that case:
+\[
+  e_d(x,y) = \begin{cases}
+      >0, &\text{if \((x,y)\) is a consensus base pair} \\
+      0, &\text{else}
+  \end{cases}
+\]
+This yields a matrix of probabilities with \(0\) values for invalid base-pairs:
+\begin{table}[H]
+\centering
+\begin{tabular}{l|cccc}
+    $e_d$ & $a$ & $c$ & $g$ & $u$ \\
+    \hline 
+    $a$   & 0   & 0   & 0   & *   \\
+    $c$   & 0   & 0   & *   & 0   \\
+    $g$   & 0   & *   & 0   & *   \\
+    $u$   & *   & 0   & *   & 0
+\end{tabular}
+\end{table}
+
+\subsection{Stochastic context-free grammars (SCFGs)}
+
+We assume in the following a context-free grammar where all production rules in
+\(\Rules\) are specified in so-called Chomsky normal formal, ie.\@ all
+production rules either have the form
+\begin{enumerate}[label=(\alph*)]
+\item\label{rule-type-a} \(A\to BC\) (we say that \(B\) is the left child-state
+  and \(C\) the right child-state of \(A\)), or
+\item\label{rule-type-b} \(A\to a\),
+\end{enumerate}
+where \(A,B,C\in\NTSyms\) and \(a\in\Alphabet\).  We then
+\begin{enumerate}[label=\arabic*.]
+\item assign transition probabilities \(t_A(B,C)\in[0,1]\) to any production
+  rule of type~\ref{rule-type-a},
+\item assign emission probabilities \(e_A(a)\in[0,1]\) to any production rule of
+  type~\ref{rule-type-b} and
+\item require that for any non-terminal \(A\in\NTSyms\) holds:
+  \[
+    \sum_{A\to BC\in\Rules} t_A(B,C) + \sum_{A\to a\in\Rules} e_A(a) = 1
+  \]
+\end{enumerate}
+
+A good way to remember/appreciate this constraint is to order the production
+rules in \(\Rules\) first by \(A\in\States\) (what's on the left) and, second,
+by type~\ref{rule-type-a}, then type~\ref{rule-type-b}:
+\begin{align*}
+&\left.
+\begin{array}{cc}
+  \left.
+  \begin{array}{cc}
+    A &\to BC \\
+    A &\to DE \\
+    A &\to FG \\
+      &\vdots \\
+  \end{array}\right\}& \text{ transition probabilities} \\
+  \left.
+  \begin{array}{cc}
+    A &\to a \\
+    A &\to b \\
+      &\vdots
+  \end{array}\right\}& \text{ emission probabilities} \\
+\end{array}\right\} \sum = 1 \\
+%--------------------
+&\quad\begin{array}{cc}
+  B &\to AC \\
+    &\vdots
+\end{array}
+\end{align*}
+
+We will call \(A\in\States\) the states of the model.  States \(A\in\States\)
+without any production rules of type~\ref{rule-type-b}, ie.\@ \(A\to a\), are
+called silent rules.
+
+\paragraph{Writing a CFG in Chomsky normal form:}
+For A CFG, the production rules have the form \(W\to\beta\).  In order to write
+optimisation algorithms for any SCFG in a compound manner, it is good to
+rephrase the production rules in Chomsky normal form CNF), ie.\@ to force the
+production rules to have on of the two formats specified earlier.
+
+This conversion can always be achieved by replacing any production rule of type
+\(W\to\beta\) by one or more production rules in CNF and by introducing
+\emph{new} states to \(\States\), if needed.
+
+For example, the production rule \(S\to aSa\) can be written in CNF as follows,
+with the new states \(W_1,W_2\in\States\):
+\begin{align}
+  S   &\to W_1 W_2 \\
+  W_1 &\to a \\
+  W_2 &\to SW_1
+\end{align}
+From now on, assume any SCFG is specified in CNF\@.
+
+We want a strategy for deriving the optimal derivation tree for given sequence
+\(X\) and SCFG\@.  Note, we need to operate in a similar way as the Viterbi, but
+now on the space of derivation trees rather than linear state paths, and, again
+we can express \(P(X,\Path)\), \(\Path\) being the derivation tree, as product
+of the respective emission and transition probabilities.  Our idea is to
+optimize once again in a step-wise fashion, similar to the Viterbi algorithm.
+
+Our key idea is to note down the optimal probability \(\gamma(i,j,A)\) of the
+best derivation tree from sub-sequence \((x_i,\dotsc,x_j)\) with \(1\leq i\),
+\(j\leq L\) and \(i<j\) and \(A\in\States\).  We realize, we can derive
+\(\gamma(i,j,A)\), if we already know \emph{all} probabilities \(\gamma(i,k,B)\)
+and \(\gamma(k+1,j,C)\) for all in-between sequence positions
+\(k\in\{i,\dotsc,j-1\}\) and all possible pairs of child states \(BC\) of \(A\),
+ie.\@ \(A\to BC\), \(A\to B'C'\), etc\@.
+
+Suppose we have a derivation tree of a top-node \(A\) for the sequence
+\((x_i,\dotsc,x_j)\), where \(A\) can derive to \(BC\), \(B'C'\) or \(B''C''\),
+where in turn \(B\) can derive to the terminal sequence \((x_i,\dotsc,x_k)\) and
+\(C\) to \((x_{k+1},\dotsc,x_j)\) with coressponding probabilities
+\(\gamma(i,k,B)\) and \(\gamma(k+1,j,C)\).  Then \(A\to BC\) is one possible
+generation for the sequence and its derivation (and the subderivation of \(B\),
+\(C\)) is the thing we record now (cf.\@ the Viterbi elements in the previous
+column in the Viterbi matrix).  We want to optimize this derivation in order
+to \emph{get the optimal derivation for the given sequence with the top element
+\(A\)} and its optimal probability \(\gamma(i,j,A)\).
+
+While for Viterbi, we walked along the matrix to the right, here we
+\enquote{work up} the derivation tree search space.
+
+\paragraph{The Cocke-Jonnge-Kasami (CYK) algorithm:}  Our goal is to, given an
+input sequence \(X\) with symbols from \(\Alphabet\) and an SCFG in CNF\@,
+device the derivation tree \(\Path^*\) (ie.\@ so-called optimal derivation tree)
+which maximizes \(P(X,\Path)\) in the model.
+
+We will define the following convention similar to the previous for the Viterbi
+algorithm:
+\begin{itemize}
+\item SCFG as specified by \(Q=\States\sqcup\Alphabet\) and the
+  production rules \(\Rules\), where \(\States=\{0,\dotsc,N\}\) with Start \(0\)
+  as the state with which each posssible derivation tree has to start and the
+  transition probabilities as well as the emission probabilities
+  \begin{align*}
+    \Trans &=\{t_A(B,C) \mid A,B,C\in\States\} \\
+    \EmProb&=\{e_A(x) \mid x\in\Alphabet, A\in\States, A\text{ non-silent} \}
+  \end{align*}
+\item Let \(\gamma(i,j,A)\) be the probability of the
+  best derivation tree covering the sub-sequence \((x_i,\dotsc,x_j)\),
+  \(i\leq j\), with top tree-node \(A\).
+\item We use \(\tau(i,j,A):=(B,C,K)\) to describe the pointer for
+  \(\gamma(i,j,A)\), where \(A\to BC\in\Rules\) and \(k\in\{i,\dotsc,j-1\}\).
+\end{itemize}
+
+The algorithm is as follows:
+\begin{enumerate}[label=(\alph*)]
+\item Initialisation.  Purpose: Read symbols from input sequence using
+  production rules of type~\ref{rule-type-b}, ie.\@ consider all so-called leaf
+  nodes of all potential derivation trees.  Refer to
+  algorithm~\ref{alg:cyk-init} for a formal description.
+
+\AlgoDisplayBlockMarkers\SetAlgoNoLine%
+\begin{algorithm}[ht]
+\For{$i = 1$; $i \leq L$; $i++$} {
+    \For{$A = 0$; $A \leq N$; $A++$} {
+        $y(i,i,A) = \begin{cases} e_a(x_i), &\text{if \(A\) not silent}\\ 0, &\text{else} \end{cases}$ \;
+        \tau(i,i,A) = (0,0,0) \tcc*{no previous derivation trees at this point}
+    }
+}
+\label{alg:cyk-init}
+\caption{CYK-Algorithm: Initialisation}
+\end{algorithm}
+
+\item Recursion.  We want to calculate the probabilities for all sub-trees
+  first, and then the transition probability to \enquote{build} the complete
+  tree from its subtrees (cf.\@ Algorithm~\ref{alg:cyk-rec}).  Note we don't
+  require a termination step at the end recursion, we have
+  \(\gamma(1,L,0)=P(X,\Path^*)\), ie.\@ the probability of the best derivation
+  tree.
+
+\AlgoDisplayBlockMarkers\SetAlgoNoLine%
+\begin{algorithm}[ht]
+\tcc{loop over all meaningful $(i,j)$ pairs in a meaningful order to ensure
+the left sub-tree and right sub-tree are calculated ahead of the overall
+transition probability.}
+\For{$i = L-1$; $i \geq 1$; $i--$} {
+    \For{$j = i+1$; $i \leq L$; $j++$} {
+        \For{$A = 0$; $A \leq N$; $A++$} {
+            \tcc{calculate left sub-tree, right-subtree, and overall}
+            $\gamma(i,j,A) = \max\limits_{\substack{B,C\\A\to BC\in\States}}
+                \left\{ \max\limits_{k\in\{i,\dotsc,j-1}
+                \left\{ \gamma(i,k,B) \cdot \gamma(k+1,j,C) \cdot t_A(B,C) \right\} \right\} $\;
+            $\tau(i,j,A) = (\widetilde{B},\widetilde{C},\widetilde{K})$
+            \tcc*{winners from above}
+        }
+    }
+}
+\label{alg:cyk-rec}
+\caption{CYK-Algorithm: Recursion step}
+\end{algorithm}
+
+\end{enumerate}
+
+We visualize the CYK using the CYK matrix which contains the \(\gamma(i,j,A)\)
+elements, needed for optimization.  In the initialization step, the diagonal
+elements from the lower-left to the upper-right corner are calculated.
+Afterwards, the upper triangle is calculated in the recursion, moving in the
+columsn with \(\gamma(i,k,B)\) and rows with \(\gamma(k+1,j,C)\).
+
+\newcommand{\udots}{\reflectbox{$\ddots$}}
+\[
+\begin{blockarray}{ccccccc}
+\begin{block}{c[cccccc]}
+X      & \gamma(1,2,0) &        &   &               &        & * \\
+       &        &        &   &               & \udots &   \\
+j      &        & \hdots & \gamma(i,j,A)  &               &        &  \\
+       &        &        &   &               &        &  \\
+       &        & \udots & \vdots &               &        &  \\
+0      & *      &        &   &               &        &  \\
+\end{block}
+       & 0      & \hdots & i &               & \hdots & X
+\end{blockarray}
+\]
+
 
 \end{document}
