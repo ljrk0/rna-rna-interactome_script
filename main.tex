@@ -534,8 +534,8 @@ We assume in the following a context-free grammar where all production rules in
 \(\Rules\) are specified in so-called Chomsky normal formal, ie.\@ all
 production rules either have the form
 \begin{enumerate}[label=(\alph*)]
-\item\label{rule-type-a} \(A\to BC\) (we say that \(B\) is the left child-state
-  and \(C\) the right child-state of \(A\)), or
+\item\label{rule-type-a} (or bifurcation) \(A\to BC\) (we say that \(B\) is the
+  left child-state and \(C\) the right child-state of \(A\)), or
 \item\label{rule-type-b} \(A\to a\),
 \end{enumerate}
 where \(A,B,C\in\NTSyms\) and \(a\in\Alphabet\).  We then
@@ -722,5 +722,106 @@ j      &        & \hdots & \gamma(i,j,A)  &               &        &  \\
 \end{blockarray}
 \]
 
+\paragraph{Traceback algorithm for CYK:}  Our task is to derive the best
+derivation tree \(\Path^*\) for a given SCFG and \(X\), ie.\@
+\[
+  \Path^* = \argmax_{\Path} \{ P(X,\Path^*) \} = \gamma(1,L,0)
+\]
+The idea is again to use a pointer matrix to derive the tree \(\Path^*\).
+In the Initialisation step, we push the tuple \((1,L,0)\) on the stack.
+In the recursion, we consider \((i,j,A):=\tau(1,L,0)\) and compare
+\(\tau(i,j,A) = (0,0,0)\).  If this is equal, we attach the sequence symbol
+\(x_i\) as child of \(A\) as we have reached the leaf node of the derivation
+tree.  Otherwise we set \(\tau(i,j,A)=(B,C,K)\), ie.\@ set states \(B\) and
+\(C\) as child states of \(A\) to derivation tree, that is push \((k+1, j, C)\)
+and \((i,k,B)\).
+
+\paragraph{Visual comparison of CYK \& Viterbi}
+
+\begin{itemize}
+\item On the one hand we have the 3-dimensional CYK-matrix with two elements
+  per \(x\) and one for states \(\States\).
+
+  For Viterbi, we have a two-dimensional matrix, as we only have one element
+  per \(x\).
+\item In the Initialisation step, we we read all symbols from \(X\) using
+  non-silent states \(A\in\States\) and production rules of type \(A\to a\),
+  with \(a\in\Alphabet\) and \(A\in\States\) only (ie.\@ fill the diagonal in
+  the matrix).
+
+  Whereas in the Viterbi algorithm's Initialisation step, we don't read symbols
+  from \(X\) but ensure that all considered state paths start in Start state
+  \(S=0\) (ie.\@ fill the leftmost column in the matrix).
+\item When recursing, we read no symbols from \(X\) anymore but move from leaf
+  nodes to the top node of all potential trees (\(S=0\)), discarding sub-optimal
+  sub-trees.  We consider bifurcating rules \(A\to BC\) only.  This means, we
+  fill the upper triangle of the matrix, starting from the upper right corner
+  and moving left and then up from the diagonal.
+
+  In the Viterbi algorithm, we read a sequence from start to end, while
+  investigating state paths up to the respective position in \(X\) and
+  discarding sub-optimal state paths.  In the matrix, we move right and then
+  up, filling the columns from the left.
+\item In CYK we do not have any termination step, at the end of the recursion
+  we have \(P(X,\Path^*)=\gamma(1,L,0)\).
+
+  Viterbi needs an additional step after having read all of the sequence, as we
+  need to ensure that the optimal state path \(\Path^*\) finished in the end
+  state.
+\item We start the traceback with the top node in the upper left corner
+  \((1,L,0)\) where the \(0\) means Start state (top to bottom).  We then have
+  bifurcations moving down and to the right, each bifurcation having further
+  bifurcations til we reach the diagonal of terminal symbols and we've completed
+  the derivation tree.  Note, \(S=0\) may not only appear as the top node of
+  \(\Path^*\) but also in other places.
+
+  Viterbi is tracedback in reverse, that is we start with the End state of
+  \(\Path^*\) in the upper right corner, hopping from pointer to pointer til
+  we reach the Start state in the lower left.
+\end{itemize}
+
+\paragraph{Interpreting the results of probabilistic models (eg.\@ HMMs, SCFGs):}
+
+\begin{itemize}
+\item In Hidden Markov Models and SCFGs, \(P(X,\Path)\) denotes the probability
+  of the state path \(\Path\)~/ derivation tree in the model for the input
+  sequence \(X\), respectively.
+\item The path/tree \(\Path\) can be converted into an annotation of \(X\).
+\item We can describe the probability of a path/tree given a sequence using the
+  definition of conditional probability as a fraction of the intersection
+  of the probabilties by the probability of the sequence itself -- which then
+  can be calculated as the sum of all the intersected probabilities of all
+  state paths~/ derivation trees with a fixed sequence.
+  \[
+    P(\Path \mid X) = \frac{P(X,\Path)}{P(X)} \qquad
+    P(X) = \sum_{\Path} P(X,\Path)
+  \]
+\item This means we can calculate \(P(X)\) using the forward algorithm in the
+  case of Viterbi, ie.\@ replace the max-operation in the algorithm by
+  summation.
+
+  For SCFGs can be calculated by the so-called inside algorithm, where we
+  replace \emph{the two max operations} in CYK by corresponding summation
+  signs.
+\item It only holds that \(P(\Path\mid X) = P(\text{annotation} \mid X)\) if
+  the annotation corresponds to \emph{a unique} state path or
+  derivation tree in the model.  In this case the HMM/SCFG is called
+  unambigious, ie.\@ if \emph{any} potential annotation \(A\) of \(X\)
+  corresponds to \emph{at most} one state path~/ derivation tree \(\Path\) in
+  the model.
+
+  If we want to calculate the formula in the unambigious case, we need to  to
+  look at all \(\widetilde{\Path}\) that correspond to the same annotation of
+  \(X\):
+  \[
+    P(A\mid X) = \begin{cases}
+        P(\Path \mid X), &\text{model unambigious} \\
+        \sum\limits_{\widetilde{\Path}} P(\widetilde{\Path} \mid X), &\text{otherwise}
+    \end{cases}
+  \]
+\end{itemize}
+
+This means, if dealing with an ambigious model, \(\Path^*\) \emph{does not}
+have to correspond to the \emph{best} annotation of any \(X\).
 
 \end{document}
