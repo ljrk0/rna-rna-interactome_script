@@ -478,6 +478,7 @@ Let's look at another example, the Pfold grammar (Knudsen \& hein,
 Bioinformatics 1999, 15(6)):
 We have a context-free grammar with the symbols \(\Syms=\Alphabet\sqcup\NTSyms\)
 and \(\Alphabet=\{s,d\}\) and \(\NTSyms=\{S,L,F\}\) and the rules:
+\setcounter{equation}{0}
 \begin{align}
   S &\to LS \\
   S &\to L \\
@@ -492,14 +493,15 @@ shown in Figure~\ref{fig:ast}.
 \begin{figure}[ht]
 \centering
 \Tree [.S [.L s ] [.S [.L s ] [.S [.L d [.F d [.F [.L s ] [.S [.L s ]  ] ] d ]  d ] [.S [.L s ] ] ] ] ]
-\label{fig:ast}
 \caption{Derivation Tree example}
+\label{fig:ast}
 \end{figure}
 
 Our strategy for turning the CFG of Pfold into a probabilistic model is to
 create a Stochastic CFG.  The idea is to assign transition probabilities to
 the different choices given the same non-terminal on the left side of the rule,
 ie.\@ these three pairs of alternatives:
+\setcounter{equation}{0}
 \begin{align}
   S &\to LS \mid L
   F &\to dFd \mid LS
@@ -593,6 +595,7 @@ This conversion can always be achieved by replacing any production rule of type
 
 For example, the production rule \(S\to aSa\) can be written in CNF as follows,
 with the new states \(W_1,W_2\in\States\):
+\setcounter{equation}{0}
 \begin{align}
   S   &\to W_1 W_2 \\
   W_1 &\to a \\
@@ -648,7 +651,7 @@ algorithm:
 \item Let \(\gamma(i,j,A)\) be the probability of the
   best derivation tree covering the sub-sequence \((x_i,\dotsc,x_j)\),
   \(i\leq j\), with top tree-node \(A\).
-\item We use \(\tau(i,j,A):=(B,C,K)\) to describe the pointer for
+\item We use \(\tau(i,j,A):=(B,C,k)\) to describe the pointer for
   \(\gamma(i,j,A)\), where \(A\to BC\in\Rules\) and \(k\in\{i,\dotsc,j-1\}\).
 \end{itemize}
 
@@ -687,8 +690,8 @@ transition probability.}
     \For{$j = i+1$; $i \leq L$; $j++$} {
         \For{$A = 0$; $A \leq N$; $A++$} {
             \tcc{calculate left sub-tree, right-subtree, and overall}
-            $\gamma(i,j,A) = \max\limits_{\substack{B,C\\A\to BC\in\States}}
-                \left\{ \max\limits_{k\in\{i,\dotsc,j-1}
+            $\gamma(i,j,A) = \max\limits_{\substack{B,C\\A\to BC\in\Rules}}
+                \left\{ \max\limits_{k\in\{i,\dotsc,j-1\}}
                 \left\{ \gamma(i,k,B) \cdot \gamma(k+1,j,C) \cdot t_A(B,C) \right\} \right\} $\;
             $\tau(i,j,A) = (\widetilde{B},\widetilde{C},\widetilde{K})$
             \tcc*{winners from above}
@@ -727,14 +730,15 @@ derivation tree \(\Path^*\) for a given SCFG and \(X\), ie.\@
 \[
   \Path^* = \argmax_{\Path} \{ P(X,\Path^*) \} = \gamma(1,L,0)
 \]
-The idea is again to use a pointer matrix to derive the tree \(\Path^*\).
-In the Initialisation step, we push the tuple \((1,L,0)\) on the stack.
-In the recursion, we consider \((i,j,A):=\tau(1,L,0)\) and compare
-\(\tau(i,j,A) = (0,0,0)\).  If this is equal, we attach the sequence symbol
-\(x_i\) as child of \(A\) as we have reached the leaf node of the derivation
-tree.  Otherwise we set \(\tau(i,j,A)=(B,C,K)\), ie.\@ set states \(B\) and
-\(C\) as child states of \(A\) to derivation tree, that is push \((k+1, j, C)\)
-and \((i,k,B)\).
+%TODO typeset algorithm
+%The idea is again to use a pointer matrix to derive the tree \(\Path^*\).
+%In the Initialisation step, we push the tuple \((1,L,0)\) on the stack.
+%In the recursion, we consider \((i,j,A):=\tau(1,L,0)\) and compare
+%\(\tau(i,j,A) = (0,0,0)\).  If this is equal, we attach the sequence symbol
+%\(x_i\) as child of \(A\) as we have reached the leaf node of the derivation
+%tree.  Otherwise we set \(\tau(i,j,A)=(B,C,K)\), ie.\@ set states \(B\) and
+%\(C\) as child states of \(A\) to derivation tree, that is push \((k+1, j, C)\)
+%and \((i,k,B)\).
 
 \paragraph{Visual comparison of CYK \& Viterbi}
 
@@ -823,5 +827,117 @@ and \((i,k,B)\).
 
 This means, if dealing with an ambigious model, \(\Path^*\) \emph{does not}
 have to correspond to the \emph{best} annotation of any \(X\).
+
+\subsection*{Exercises}
+\begin{enumerate}[label=(\alph*)]
+\item The time complexity is \(T(N,L,P)\in\mathcal{O}(N^2\cdot P\cdot L^3)\)
+  and the space complexity is simply \(S(L,N) \in \mathcal{O}(L^2\cdot N)\).
+\item While we before filled the upper triangle of the matrix, starting from
+  the upper right corner, we now fill the lower triangle and start in the
+  lower left.  The final state or top node is then in the lower right corner.
+
+  The new recursion is displayed Algorithm~\ref{alg:cyk-rec2}.
+
+\AlgoDisplayBlockMarkers\SetAlgoNoLine%
+\begin{algorithm}[ht]
+\For{$i = 1$; $i \leq L-1$; $i++$} {
+    \For{$j = i-1$; $i \geq 0$; $j--$} {
+        \For{$A = 0$; $A \leq N$; $A++$} {
+            \tcc{calculate left sub-tree, right-subtree, and overall}
+            $\gamma(i,j,A) = \max\limits_{\substack{B,C\\A\to BC\in\Rules}}
+                \left\{ \max\limits_{k\in\{i,\dotsc,j-1\}}
+                \left\{ \gamma(i,k,B) \cdot \gamma(k+1,j,C) \cdot t_A(B,C) \right\} \right\} $\;
+            $\tau(i,j,A) = (\widetilde{B},\widetilde{C},\widetilde{K})$
+            \tcc*{winners from above}
+        }
+    }
+}
+\label{alg:cyk-rec2}
+\caption{CYK-Algorithm: Recursion step}
+\end{algorithm}
+
+\item We would need to modify it critically needs to distinguish between
+  the two types of rules dictated by CNF\@.  If we'd allow for a more flexible
+  implementation, this would mean much more complexity implementation-wise.
+  Restricting ourselves to CNF grammars only adds an additional step to convert
+  the grammar to CNF\@.
+
+  Additionally, we'd have to use the emission probabilities in every step and
+  not only in the initialization step, making even that part of the algorithm
+  more complex.
+\item A derivation tree for the sequence \(aaab\) is given in
+  Figure~\ref{fig:ast2}.
+
+  The grammar is unambigious.  We can convince ourselves by induction,
+  considering a minimal length of \(L=2\) first, for which we have four
+  possible sentences which are all unambigiously derived.
+  If we consider any longer sequence of length \(L+1\) for which we know that
+  all sequences of \(L\) are all unambigiously produced, we can distinguish the
+  two cases of having a trailing \(a\) or \(b\) which maps to exactly two
+  different rules, making the whole grammar unambigious.
+
+  A CNF version of the grammar can be easily obtained by replacing mixed
+  rules with rules to the new states \(A\) and \(B\) which resolve to \(a\) and
+  \(b\) respectively, ie.\@:
+  \setcounter{equation}{0}
+  \begin{align}
+    S &\to AS \\
+    S &\to AT \\
+    S &\to BS \\
+    S &\to BT \\
+    T &\to a \\
+    T &\to b \\
+    A &\to A \\
+    B &\to B
+  \end{align}
+  A reduced version would be to fold these new rules into \(T\), giving
+  \setcounter{equation}{0}
+  \begin{align}
+    S &\to TS \\
+    S &\to TT \\
+    T &\to a \\
+    T &\to b
+  \end{align}
+
+\begin{figure}[ht]
+\centering
+\Tree [.S a [.S a [.S [.T b ] ] ] ]
+\caption{Derivation Tree}
+\label{fig:ast2}
+\end{figure}
+
+\item Our grammar looks like this:
+  \begin{align*}
+    S &\to X\mid Y \\
+    S &\to AY\mid \Empty \\
+    S &\to BX\mid \Empty \\
+    A &\to a \\
+    B &\to b
+  \end{align*}
+  It is quite trivially unambigious and correct, minimality is more hard to
+  proove though.
+
+  A stricter CNF version without \(\Empty\) would be:
+  \setcounter{equation}{0}
+  \begin{align}
+    S &\to AT \\
+    S &\to BF \\
+    T &\to BF \\
+    F &\to AT \\
+    T &\to b \\
+    F &\to a \\
+    A &\to a \\
+    B &\to a
+  \end{align}
+
+% ababab
+%\begin{figure}[ht]
+%\centering
+%\Tree [.S [.A a ] [.T [.B [. ]  ] ]
+%\caption{Derivation Tree}
+%\label{fig:ast3}
+%\end{figure}
+
+\end{enumerate}
 
 \end{document}
