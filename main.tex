@@ -917,7 +917,8 @@ have to correspond to the \emph{best} annotation of any \(X\).
   It is quite trivially unambigious and correct, minimality is more hard to
   proove though.
 
-  A stricter CNF version without \(\Empty\) would be:
+  A stricter CNF version without \(\Empty\) would be, with a derivation tree
+  for the sequence \(ababab\) given in Figure~\ref{fig:ast3}.
   \setcounter{equation}{0}
   \begin{align}
     S &\to AT \\
@@ -931,12 +932,12 @@ have to correspond to the \emph{best} annotation of any \(X\).
   \end{align}
 
 % ababab
-%\begin{figure}[ht]
-%\centering
-%\Tree [.S [.A a ] [.T [.B [. ]  ] ]
-%\caption{Derivation Tree}
-%\label{fig:ast3}
-%\end{figure}
+\begin{figure}[ht]
+\centering
+\Tree [.S [.A a ] [.T [.B b ] [.F [.A a ] [.T [.B b ] [.F [.A a ] [.T b ] ] ] ] ] ]
+\caption{Derivation Tree}
+\label{fig:ast3}
+\end{figure}
 
 \end{enumerate}
 
