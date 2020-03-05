@@ -931,7 +931,6 @@ have to correspond to the \emph{best} annotation of any \(X\).
     B &\to a
   \end{align}
 
-% ababab
 \begin{figure}[ht]
 \centering
 \Tree [.S [.A a ] [.T [.B b ] [.F [.A a ] [.T [.B b ] [.F [.A a ] [.T b ] ] ] ] ] ]
@@ -940,5 +939,113 @@ have to correspond to the \emph{best} annotation of any \(X\).
 \end{figure}
 
 \end{enumerate}
+
+\subsection{Predicting RNA structures by free energy minimization (MFE approach)}
+
+Our key assumption is that the relevant functional RNA structure is equal to the
+most stable RNA structure of the naked RNA sequence (ie.\@ without
+as-interaction partners) in thermodynamic equilibrium.  Note, the MFE structure
+depends on the temperature and the concentration of ions (eg.\@
+\(\text{Mg}^{2+}\)).  The key observation is that the overall free energy
+\(\Diff G\) (in \([\si{\kilo\joule\per\mole}]\)) of an RNA structure can be
+expressed as the sum of smaller \(\Diff G\)-contributions of lego-like
+structural building blocks. (Remark: \(\SI{1}{\mole}\) is the mass of roughly
+\(\num{6e23} \text{ molecules}\)).
+
+Overall: A lower \(\Diff G\) means a higher stability (the base-like \(G\)
+value is set at the extended RNA sequence in solution at a given temperature
+\(T\) and in concentration).  The strategy for \(\Diff G\) optimization, ie.\@
+MFE structure prediction is to go through all possible RNA structures for a
+given input sequence \(X\) and we optimize the \(\Diff G\)-contribution of
+increasing larger structural building blocks to identify \emph{the} RNA
+structure that globally minimizes \(\Diff G\) for the given sequence \(X\).
+Note, once again, we can use a dynamic programming approach.
+
+\paragraph{Example} If we have a structure, we may have loops of length four
+(ie.\@ no base-pairs) (\(+\SI{5.9}{\kilo\cal\per\mole}\)) with a terminal
+mis-match of hairpin (\(-\SI{1.1}{\kilo\cal\per\mole}\)), strains of two
+\enquote{parallel} base-pairs with stacking energies of two adjacent pairs
+of base-pairs (\(2\cdot -\SI{2.9}{\kilo\cal\per\mole}\)), a single nucleotides
+bulge that do not interrupt those pairs (\(-\SI{0.9}{\kilo\cal\per\mole}\))
+with a dangling nucleotide outside of the outermost base-pair
+(\(-\SI{0.3}{\kilo\cal\per\mole}\))and an unstructured sequence, taht is
+anything outside the outermost loop which does not affect the energy/stability
+(\(\SI{0}{\kilo\cal\per\mole}\)).  Overall, the sum of all structure parts
+yields an overall free energy of \(\Diff G = \SI{-4.6}{\kilo\cal\per\mole}\).
+Note, the contributions from the small structural parts are based on
+experimentally determined \(\Diff G\) values.
+
+It \emph{is} possible to come up with an SCFG that replicates the MFE approach,
+but there is (conceptually) only a single approach to MFE-based RNA structure
+prediction. To calculate the MFE structure for a given input sequence \(X\),
+the Zuker algorithm [M.~Zuker \& P.~Stiegler, Nucelic Acidics Research (1981),
+9:133:148] is used.  This algorithm employs a dynamic programming strategy,
+similar to CYK and takes \(\mathcal{O}(L^3)\) time and \(\mathcal{O}(L^2)\)
+memory for a sequence \(X\) of length \(L\).  It is eg.\@ used by the programs
+Mfold and RNAfold.
+
+\paragraph{Difference between the MFE approach and SCFG-based approach\emph{es}:}
+\begin{itemize}
+\item With MFE our goal is to predict the most stable structure, not the
+  RNA structure corresponding to the best derivation tree in a user-specified
+  model as with SCFG approaches.
+\item Thus, the Zuker algorithm is used instead of the CYK algorithm.
+\item We assign structural building blocks \(\Diff G\) energy values
+  (\([\si{\kilo\joule\per\mole}]\) or \([\si{\kilo\cal\per\mole}]\)) for the
+  MFE approach.
+
+  With SCFG we assign probabilities to the parts instead.
+\item The parameters required are derived using experiments for the MFE
+  approach, whereas for SCFG we can train the model to derive the probability
+  paramaters from data where the structural annotation is known.
+
+  This means, different SCFGs can be set up for different underlying
+  \emph{hypotheses}, which is not the case for MFE\@.
+\item Also, MFE cannot be readily extended to work in a comparative way, eg.\@
+  to take a given multiple-sequence alignment (MSA) of sequences from related
+  species into account.
+
+  This is possible, however, using SCFGs, as we can \emph{easily} extend the
+  approach to improve prediction accuracy by \enquote{simply} adding more
+  information into account.
+\end{itemize}
+
+So the key idea of the underlying RNA comparative structure prediction using
+SCFGs is to have a \emph{comparative strategy}, that is a strategy that takes
+\emph{not one}, but several evolutionary related input sequences into account
+(these are typically, but not always pre-aligned in form of an input MSA).
+Say, we have a sequence for humans \(X_h\), mice \(X_m\) and fugu \(X_f\), the
+rough \enquote{shape} (loops, strains, etc.\@) are similar, while perhaps some
+base-pairs are different.
+
+The sequences might then look like this:
+\begin{align*}
+X_h &= \dotsb\;G\;C\;C\;C\;\dotsb \\
+X_m &= \dotsb\;C\;A\;C\;G\;\dotsb \\
+X_f &= \dotsb\;A\;C\;C\;U\;\dotsb
+\end{align*}
+So, while the second and third column are (roughly) the same over all sequences,
+the first and fourth might not look as good.  However, the correlating
+base-pairings between \(G-C\), \(C-G\) and \(A-U\) are all valid (pair of
+co-varying alignmnet columns) and might have just evolved -- but the
+functionally relevant structure in the organism tends to be conserved in
+evolution.  Using multiple aligned sequences as input, such as the above, is the
+strategy employed py programs such as Pfold or RNA-Decoder.
+
+\paragraph{Strategy \enquote{difficulties} of the comparative approach:}
+\begin{enumerate}
+\item You need to identify orthologous or (at least) homologous sequences to the
+  RNA sequence/gene in the reference organism that you care about, eg.\@ have
+  just \(X_h\).
+\item The next step is to see if known related genes exist in other
+  species (ensemble genome browser, UCSC genome browse) to have the sequences
+  of \(X_h\), \(X_m\) and \(X_f\).
+\item Finally, we take those three sequences
+  and compile MSA\@.
+
+  Here, you requre a program that is aware of the ability that some base-pairs
+  may be encoded in the input sequences (eg.\@ SimulFold)!
+\end{enumerate}
+
 
 \end{document}
