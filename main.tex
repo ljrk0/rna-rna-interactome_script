@@ -1151,6 +1151,7 @@ Now that we've seen what a simple model can do, we can build a
 \item Time dependant rate matrix
 \item Sequence dependant rate matrix
 \item Rate is nucleotide dependant (Kimura Model)
+\item Different equilibrium rates (Felsenstein)
 \end{itemize}
 
 \paragraph{Kimura model (1980).}  The Kimura model is an improvement over
@@ -1281,4 +1282,84 @@ of a base-pair column, that we assume the other nucleotide to be one, that
 doesn't form a base-pair with the non-gapped symbol.  Similarly, if the gap is
 in both columns, we can assume that they would have formed a base-pair and thus
 don't consider all 16 combinations but the 6 that form a consensual base-pair.
+
+\subsection*{Exercises}
+\begin{enumerate}[label=(\alph*)]
+\item The rate matrix gives the how often we have transitions between states,
+  while the derived substitution matrix gives the probability to transition into
+  a different state.
+\item We use the Felsenstein algorithm by working up the tree from the leaf
+  nodes to the top node by accumulating all the possibilities.
+
+  The model has to be multiplicative and time reversable, that is that the
+  transitions hold:
+  \[
+    q_i P_{ji} = q_j P_{ji}
+  \]
+
+  To calculate the overall likelihood, we need to compute the likelihood for all
+  \(L\) columns and the topology and alignment.
+
+  We handle those nodes as leaf nodes within the algorithm but keep the
+  position.
+\item We know that for a matrix \(S(t)\) it's entries are given by
+  \(P_{ij}(t)=P(i \mid j, t)\).  If we now multiply two matrices, the resulting
+  elements \(P'_{ij}\)
+  \[
+    P'_{ij} = \sum_{k=1}^4 P_{ik}(t_1) \cdot P_{kj}(t_2)
+  \]
+  Since if \(i=j\) we know that \(P_{ij}=\frac{1}{4}(1+3e^{-4\alpha t})\) and
+  otherwise \(P_{ij}=\frac{1}{4}(1-e^{-4\alpha t})\) in the JC model, we can
+  now look the values that \(k\) assumes and will notice that all values will
+  cancel each other out til we're left with:
+  \[
+    P_{ij}(t_1) + P_{ij}(t_2)
+  \]
+  Which is the result if we add the components of the matrix.
+\item Similarly, we can calculate the derivation \(S'(t)=: (P'_{ij}(t))\):
+  \[
+    P'_{ij} = \begin{cases}
+        -3\alpha e^{-4\alpha t}, &i=j \\
+          \alpha e^{-4\alpha t}
+    \end{cases}
+  \]
+
+  Similarly, for the rate we know:
+  \[
+    r_{ij} = \begin{cases}
+        -3\alpha \\
+        \alpha
+    \end{cases}
+  \]
+  and we define
+  The formula for the matrix multiplication of \(S(t)\cdot R=(P''_{ij}(t))\)
+  \[
+    P''_{ij} = \begin{cases}
+        (-3\alpha\cdot \frac{1}{4}(1+3e^{-4\alpha t}) + (3\alpha\cdot \frac{1}{4}(1- e^{-4\alpha t})), &i=j \\
+        (-3\alpha\cdot \frac{1}{4}(1- e^{-4\alpha t}) + ( \alpha\cdot \frac{1}{4}(1+3e^{-4\alpha t}) + (2\alpha\cdot \frac{1}{4}1- e^{-4\alpha t})
+    \end{cases}
+  \]
+  Rewriting the formulas will give the desired result.
+
+  The implication is quite interesting though, it means that our substitution
+  matrix over time gives -- when looking on it over a short time
+  \(\varepsilon>0\) -- the same value as \(\varepsilon\cdot R\).
+\item We only need to do the calculations for two columns, since the columns are
+  independent of each other, thus all columns with the same sequence elements
+  have the same probability.
+
+  The probability of the column \((A,A,T)\) can be calculated as such:
+  \[
+    \sum_{b\in\Alphabet} \sum_{a\in\Alphabet} q_a
+      P(b\mid a, t_4) P(T \mid a, t_3) P(A\mid b, t_1) P(A\mid b, t_2)
+  \]
+  We can simplify the term, since for JC the equilibrium is \(q_a=1/4\) and
+  many values repeat themselves or are independent.
+\end{enumerate}
+
+
+
+
+
+
 \end{document}
