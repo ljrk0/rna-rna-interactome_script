@@ -1167,8 +1167,8 @@ The rate matrix now looks like this:
 \begin{block}{c(cccc)}
 A & *      & \beta  & \alpha & \beta  \\
 C & \beta  & *      & \beta  & \alpha \\
-G & \alpha & \beta  & *      & \beta   \\
-T & \beta  & \alpha & \beta & *      \\
+G & \alpha & \beta  & *      & \beta  \\
+T & \beta  & \alpha & \beta & *       \\
 \end{block}
 \end{blockarray}
 \]
@@ -1176,5 +1176,82 @@ We would now get three equations in our linear equation system.
 
 Other models are Felsenstein (1981), HKY85 by combining Felsenstein and
 Kimura, GTR (Generalised time reversible model), etc\@.
+
+\subsubsection{Calculation of the likelihood -- Felsenstein algorithm}
+
+We number the leaf nodes from \(1,\dotsc,N\) and number the nodes on the
+layers above in rows \(N,\dotsc,2N-1\).  With \(\alpha(i)\) we describe the
+parent node of node \(i\), eg.\@ \(\alpha(1)=\alpha(2)=N+1\).  Since all our
+\(N\) sequences are aligned, they have the same length.  If we order them
+below each other, we describe \(\Seqs_p\) as the \(p\)-th column.  Analogously,
+\(X_p^i\) is the \emph{position} of the \(p\)-th symbol in the sequence \(X^i\).
+We describe the equilibrium frequence of our nucleotide
+\(a\in\Alphabet=\{A,C,G,T\}\) as \(q_t\) and use \(a_p^i\) to denote the
+\(p\)-th symbol in node \(i\) (ie.\@ at position \(X_p^i\).  Finally,
+the probability of observing leaf nodes under a node \(k\), given that at \(k\)
+we have \(a\) is given by \(P_p(L_k \mid a)\).
+
+We will now look at the probabilities of only one colum and have the following
+probability using the transition probabilities from a parent to the child for
+internal nodes and for the leaf nodes:
+\[
+  P(X_p \mid T, A_p) = \sum_{\substack{a_p^{N+1}\\\in\Alphabet}} \sum_{\substack{a_p^{N+2}\\\in\Alphabet}} \dotsb \sum_{\substack{a_p^{2N-1}\\\in\Alphabet}}
+      q_p^{2n-1} \cdot \left(
+      \underbrace{\prod_{i=N+1}^{2N-2} P(a_p^i \mid a_p^{\alpha(i)} t_i)}_{\text{internal nodes}} \cdot
+      \underbrace{\prod_{i=1}^{N}      P(X_p^i \mid a_p^i           t_i)}_{\text{child nodes}} \right)
+\]
+If we look at an example where a symbol \(a\) derived to \(A\) within \(t_1\)
+and to \(C\) within \(t_2\), the probability is given by:
+\[
+  \sum_{a\in\Alphabet} q_a \cdot P(A \mid a, t_1) \cdot P(C \mid a, t_2)
+\]
+
+The Felsenstein algorithm aims to calculate that probability.  To do that, we
+consider the more general example of \(k\) evolvling into \(i\) and \(j\) in
+times \(t_i\) and \(t_j\) respectively.  The probability of \(k\) itself is
+denoted as \(P_p(L_k \mid a)\) for some \(a\in\Alphabet\), and for analogously
+\(P(L_i \mid b)\) and \(P(L_j \mid c)\) for the nodes \(i\) and \(j\).  Since
+for a fixed \(a\) the nodes \(i\) and \(j\) can have any symbol, we have to
+calculate for any \(a\):
+\[
+  P_p(L_k \mid a) = \sum_{c\in\Alphabet} \sum_{b\in\Alphabet}
+      P(L_i \mid b) \cdot P(b \mid a, t_i) \cdot P_p(L_j \mid c) \cdot P_p(c \mid a, t_j)
+\]
+The second and fourth element in the product are elements we will find in the
+substitution matrix.
+
+
+\begin{enumerate}[label=(\alph*)]
+\item Initialisation.  We set the number designating the root node to the number
+  of total nodes \(k = 2N-1\).
+\item Recursion.  We now iterate over all nodes to \(k\) and distinguish
+  the cases whether it is a leaf node or not, and calculate the probability
+  from before as seen in Algorithm~\ref{alg:felsenstein}.
+
+
+\AlgoDisplayBlockMarkers\SetAlgoNoLine%
+\begin{algorithm}[ht]
+\If{$k$ is not a leaf node} {
+    $P_p(L_k \mid a) = \sum\limits_{c\in\Alphabet} \sum\limits_{b\in\Alphabet}
+        P(L_i \mid b) \cdot P(b \mid a, t_i) \cdot P_p(L_j \mid c) \cdot P_p(c \mid a, t_j)$ \;
+} \Else {
+    $P_p(L_k \mid a) = \begin{cases} 1, &x_p^k = a\\ 0\end{cases}$\;
+}
+\label{alg:felsenstein}
+\caption{Felsenstein-Algorithm: Recursion step, loop body}
+\end{algorithm}
+
+\item Termination.  We now calculate the final probability:
+  \[
+    \sum_{a\in\Alphabet} q_a \cdot P_p(L_{2N-1} \mid a) = P(X_p \mid T, A_p)
+  \]
+\end{enumerate}
+This algorithm gave us the possibility to calculate the probability, but we
+have not yet found a way to \emph{derive} the tree.  We will now use the
+maximum likelihood approach to find the best tree, ie.\@ with the best
+probability for all \(L\) columns:
+\[
+  P(\Seqs \mid T,A) = \prod_{p=1}^L P(X_p \mid T,A_p)
+\]
 
 \end{document}
