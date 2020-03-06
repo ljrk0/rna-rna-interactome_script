@@ -1231,7 +1231,7 @@ substitution matrix.
 
 \AlgoDisplayBlockMarkers\SetAlgoNoLine%
 \begin{algorithm}[ht]
-\If{$k$ is not a leaf node} {
+\uIf{$k$ is not a leaf node} {
     $P_p(L_k \mid a) = \sum\limits_{c\in\Alphabet} \sum\limits_{b\in\Alphabet}
         P(L_i \mid b) \cdot P(b \mid a, t_i) \cdot P_p(L_j \mid c) \cdot P_p(c \mid a, t_j)$ \;
 } \Else {
@@ -1254,4 +1254,31 @@ probability for all \(L\) columns:
   P(\Seqs \mid T,A) = \prod_{p=1}^L P(X_p \mid T,A_p)
 \]
 
+\subsection{Pfold}
+
+Pfold is a program, combining SCFGs to derive the derivation tree, but also
+takes an alignment as input.  If we look at the aligned sequences, we treat
+columns that are base-pairs differently from those which are single.
+
+For a signle column \(c_s\) we look at it's position \(X_p\) and want to derive
+the emission probability from the emission probability of a single symbol
+\(e(a)\).
+\[
+  e(X_p) = P(X_p \mid T, A_p)
+\]
+For base-pairs, we need to create a \(16\times 16\) matrix, with
+all combinations of the 4 bases with all other 4 bases.  We then get:
+\[
+  e(X_{p_1}, X_{p_2}) = P(X_{p_1}, X_{p_2} \mid T, A_{p_1 p_2})
+\]
+
+We also need to handle gaps \emph{within} a column or columns, ie.\@ positions
+at which not all sequences have a base.  We treat these cases as
+\enquote{missing information}, ie.\@ we don't know anything about that
+nucleotide -- this means the probabilities for all nucleotides are the same.
+A small optimization one can make is that if a gap exists in only one column
+of a base-pair column, that we assume the other nucleotide to be one, that
+doesn't form a base-pair with the non-gapped symbol.  Similarly, if the gap is
+in both columns, we can assume that they would have formed a base-pair and thus
+don't consider all 16 combinations but the 6 that form a consensual base-pair.
 \end{document}
