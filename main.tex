@@ -1032,7 +1032,7 @@ functionally relevant structure in the organism tends to be conserved in
 evolution.  Using multiple aligned sequences as input, such as the above, is the
 strategy employed py programs such as Pfold or RNA-Decoder.
 
-\paragraph{Strategy \enquote{difficulties} of the comparative approach:}
+\paragraph{Strategic \enquote{difficulties} of the comparative approach:}
 \begin{enumerate}
 \item You need to identify orthologous or (at least) homologous sequences to the
   RNA sequence/gene in the reference organism that you care about, eg.\@ have
@@ -1047,5 +1047,134 @@ strategy employed py programs such as Pfold or RNA-Decoder.
   may be encoded in the input sequences (eg.\@ SimulFold)!
 \end{enumerate}
 
+
+\subsection{Evaluating models of evolution}
+
+Our task is to derive a phylogenetic relation between members of a set
+\(\Seqs = \{ X^1, X^2, \dotsc, X^N \}\), ie.\@ to have a tree \(T\) where
+the probability to generate this set under this tree \(P(\Seqs \mid T)\)
+should be maximized.  To model that, we want to first model how likely it is
+that a sequence \(Y\) evolves into \(X\) under the subtree (or time) \(t\):
+\(P(X\mid Y, t)\).
+
+If we have for example common ancestor \(X^5\) which evolved into
+\(X^4\) with \(t_4\) and into \(X^3\) with \(t_3\).  \(X^4\) then evolved into
+\(X^1\) with \(t_1\) and into \(X^2\) under \(t_2\).  Given the single
+evolutionary probabilities (ie.\@ the tree is known), we can calculate the
+composite probability:
+\[
+  P(X^1 X^2 X^3 \mid T) = P(X^5) \cdot
+                          P(X^4 \mid X^5, t_4) \cdot
+                          P(X^3 \mid X^5, t_3) \cdot
+                          P(X^1 \mid X^4, t_1) \cdot
+                          P(X^2 \mid X^4, t_2)
+\]
+However, most of the times, only the probabilities of the leaf nodes are known,
+or only a subset of the other probabilities, we basically need to sum all
+possible evolutions from one sequence \(Y\) to another \(X\).
+That means, we first need to create an algorithm to calculate the likelihood
+for an arbitrary number of \(\Seqs\).
+
+In general though, we don't even know the tree, so we want to maximize this
+likelihood function in order to \emph{infer} the tree.
+
+\paragraph{Jukes-Cantor (JC) model (1969).}
+This model deals \emph{only} with
+nucleotide substitution, but \emph{not} with insertion or deletion.
+It assumes that every position in the sequence evolves independently.
+Additionally, every substitution between nucleotides has the same rate, and
+it also doesn't vary between sequence positions.
+
+We define a rate matrix \(R\) where every position \(r_{ij}\) gives the
+rate from transitions from \(j\) to \(i\).  As all transitions are all
+the same, we use \(\alpha>0\) to denote that probability:
+\[
+\begin{blockarray}{ccccc}
+  & A      & C      & G      & T \\
+\begin{block}{c(cccc)}
+A & *      & \alpha & \alpha & \alpha \\
+C & \alpha & *      & \alpha & \alpha \\
+G & \alpha & \alpha & *      & \alpha \\
+T & \alpha & \alpha & \alpha & *      \\
+\end{block}
+\end{blockarray}
+\]
+We also use \(*\) to denote \(-3\alpha\) which is the probability for any
+\(r_{ij}\) with \(i=j\), st.\@ the total probability in any column \(j\) is
+zero:
+\[
+  \sum_i r_{ij} = 0
+\]
+
+We now want to create a substitution matrix \(S(t)\), where we use the
+notation for the transition probability \(P_{ij}=P(i\mid j,t)\).
+This matrix should denote the probability to \emph{be} in any of the states.
+This yields:
+\[
+  \frac{\diff S(t)}{\diff t} = S(t) \cdot R = 
+  \begin{pmatrix}
+      P_{AA}(t) & \hdots & P_{AT}(t) \\
+      P_{CA}(t) & \hdots &           \\
+      P_{GA}(t) & \hdots &           \\
+      P_{TA}(t) & \hdots & P_{TT}(t) \\
+  \end{pmatrix} \cdot R
+\]
+We can solve this by creating a set of linear 16 equations:
+\begin{align*}
+  -3\alpha r(t) + \alpha s(t) + \alpha s(t) + \alpha s(t) &= \frac{\diff r(t)}{\diff t} \\
+  &\vdots
+\end{align*}
+As the equations share most variables, we can condense it to two and then
+calculate:
+\begin{align*}
+  r(t) = P_{ii}(t) &= \frac{1}{4}\cdot (1+3e^{-4\alpha t}) & t\to\infty: P_{ii}(t) = \frac{1}{4} \\
+  s(t) = P_{ij}(t) &= \frac{1}{4}\cdot (1- e^{-4\alpha t}) & t\to\infty: P_{ij}(t) = \frac{1}{4}
+\end{align*}
+That is, if we go back in time far enough, the probabilities for all
+nucleotides will be equally \(1/4\).
+
+Our model has a multiplicative property, which means that for two times
+\(t\) and \(t'\) to get from \(j\) to \(i\) with an intermediate \(k\), we
+have:
+\[
+  S(t+t') = S(t)\cdot S(t')
+\]
+For the probability this means (with our alphabet \(\Alphabet=\{A,C,G,T\}\)):
+\[
+  P(i\mid j, t+t') = \sum_{k\in\Alphabet} P(i\mid k,t) \cdot P(k\mid j, t)
+\]
+
+Now that we've seen what a simple model can do, we can build a
+\enquote{wishlist} for improvements on this model:
+\begin{itemize}
+\item Models to deal with insertions and deletions
+\item Time dependant rate matrix
+\item Sequence dependant rate matrix
+\item Rate is nucleotide dependant (Kimura Model)
+\end{itemize}
+
+\paragraph{Kimura model (1980).}  The Kimura model is an improvement over
+the Jukes-Cantor model, where transitions between \(A\leftrightarrow G\) and
+\(T\leftrightarrow C\) are assigned the probability \(\alpha\), and the
+other transitions (\(A\leftrightarrow T\), \(A\leftrightarrow C\),
+\(G\leftrightarrow C\) and \(G\leftrightarrow T\)) assigned \(\beta\), with
+\(\alpha > \beta\).
+
+The rate matrix now looks like this:
+\[
+\begin{blockarray}{ccccc}
+  & A      & C      & G      & T \\
+\begin{block}{c(cccc)}
+A & *      & \beta  & \alpha & \beta  \\
+C & \beta  & *      & \beta  & \alpha \\
+G & \alpha & \beta  & *      & \beta   \\
+T & \beta  & \alpha & \beta & *      \\
+\end{block}
+\end{blockarray}
+\]
+We would now get three equations in our linear equation system.
+
+Other models are Felsenstein (1981), HKY85 by combining Felsenstein and
+Kimura, GTR (Generalised time reversible model), etc\@.
 
 \end{document}
