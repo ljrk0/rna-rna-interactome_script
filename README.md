@@ -3,10 +3,9 @@
 ## Kompilieren
 
 Es wird als LaTeX-Engine LuaLaTeX benutzt.  Am Bequemsten ist das Kompilieren
-mit dem Wrapper LateXmk für den bereits auch eine Konfigurationsdatei im Repo
-ist die automatisch eingelesen wird:
+mit dem Wrapper LateXmk:
 ```
-$ latexmk -pvc -view=none main.tex
+$ latexmk -norc -lualatex main.tex
 ```
 
 ## Code Style & Typographie
